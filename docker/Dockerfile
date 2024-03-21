@@ -31,7 +31,7 @@ RUN mkdir /data
 
 # Install MMSegmentation
 RUN echo changed
-COPY . /mmsegmentation
+RUN git clone --depth 1 -b ${MMSEGMENTATION_BRANCH} https://github.com/logivations/mmsegmentation.git
 WORKDIR /mmsegmentation
 ENV FORCE_CUDA="1"
 RUN pip install -r requirements.txt
