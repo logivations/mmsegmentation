@@ -85,7 +85,7 @@ steps:
       DOCKER_BUILDKIT: 1
     settings: 
       dockerfile: docker/Dockerfile
-      context: .
+      context: docker/
       registry: quay.io
       repo: quay.io/logivations/ml_all
       privileged: true
