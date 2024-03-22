@@ -34,12 +34,13 @@ steps:
       DOCKER_BUILDKIT: 1
     settings:
       dockerfile: docker/Dockerfile
-      context: docker/
+      context: .
       registry: quay.io
       repo: quay.io/logivations/ml_all
       privileged: true
       build_args:
         - BUILDKIT_INLINE_CACHE=1
+        - MMSEGMENTATION_BRANCH=${DRONE_SOURCE_BRANCH}
       cache_from: quay.io/logivations/ml_all:LS_mmseg_latest
       tags:
         - LS_mmseg_latest
@@ -90,6 +91,7 @@ steps:
       privileged: true
       build_args:
         - BUILDKIT_INLINE_CACHE=1
+        - MMSEGMENTATION_BRANCH=${DRONE_SOURCE_BRANCH}
       cache_from: 
         - quay.io/logivations/ml_all:LS_mmseg_latest
         - quay.io/logivations/ml_all:LS_mmseg_pr${DRONE_PULL_REQUEST}

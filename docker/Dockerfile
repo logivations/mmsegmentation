@@ -3,6 +3,7 @@ ARG CUDA="11.3"
 ARG CUDNN="8"
 ARG MMCV="2.0.1"
 
+
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
@@ -31,7 +32,9 @@ RUN mkdir /data
 
 # Install MMSegmentation
 RUN echo changed
-RUN git clone https://github.com/logivations/mmsegmentation /mmsegmentation
+ARG MMSEGMENTATION_BRANCH
+ENV MMSEGMENTATION_BRANCH=${MMSEGMENTATION_BRANCH}
+RUN git clone --depth 1 -b ${MMSEGMENTATION_BRANCH} https://github.com/logivations/mmsegmentation.git /mmsegmentation
 WORKDIR /mmsegmentation
 ENV FORCE_CUDA="1"
 RUN pip install -r requirements.txt
