@@ -3,7 +3,6 @@
 MODEL_DIR=$1
 MODEL_DIR=${MODEL_DIR%%/}
 shift
-current_date=$(date +"%d_%m_%Y")
 
 CLASSES=( "$@" )
 CLASSES=$(IFS=';' ; echo "${CLASSES[*]}")
@@ -12,8 +11,8 @@ CLASSES_LENGTH=${#CLASSES[@]}
 echo "[property]
 gpu-id=0
 
-onnx-file=segmentation_$current_date.onnx
-model-engine-file=segmentation_$current_date.onnx_b1_gpu0_fp16.engine
+onnx-file=segmentation_model.onnx
+model-engine-file=segmentation_model.onnx_b1_gpu0_fp16.engine
 
 gie-unique-id=4
 net-scale-factor=0.00784313725490196
