@@ -6,11 +6,13 @@ shift
 
 CLASSES=( "$@" )
 CLASSES=$(IFS=';' ; echo "${CLASSES[*]}")
+CLASSES_LENGTH=${#CLASSES[@]}
 
 echo "[property]
+gpu-id=0
 
-onnx-file=$MODEL_DIR/model.onnx
-model-engine-file=$MODEL_DIR/model.onnx_b1_gpu0_fp16.engine
+onnx-file=segmentation_model.onnx
+model-engine-file=segmentation_model.onnx_b1_gpu0_fp16.engine
 
 gie-unique-id=4
 net-scale-factor=0.00784313725490196
@@ -28,7 +30,7 @@ segmentation-output-order=0 # 0: NCHW # 1: NHWC
 #segmentation-threshold=0.0
 output-tensor-meta=1
 
-num-detected-classes=2
+num-detected-classes=$CLASSES_LENGTH
 output-blob-names=output
 
 [custom]

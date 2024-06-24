@@ -20,7 +20,7 @@ class FPSLogger:
         self.count = 0
         self.last_record = 0.0
         self.last_print = time.time()
-        self.interval = 10
+        self.interval = 3
 
     def start_record(self):
         self.last_record = time.time()
@@ -41,8 +41,6 @@ def main(config):
     inference = MMSegInferencer(
         model=config.config,
         weights=config.checkpoint,
-        classes=("full", "empty",),
-        palette=([0,0,0], [0,255,0],),
     )
     if config.silent:
         inference.show_progress = False
@@ -54,12 +52,8 @@ def main(config):
     start_time = time.time()
     if config.mask_only:
         image_paths = list(images.glob("**/*.jpg"))
-        num_images = len(image_paths)
         for i, p in enumerate(image_paths, 1):
             try:
-                if i % 100 == 0:
-                    print(f"|mmseg predict| [{i}/{num_images}]")
-
                 fps_logger.start_record()
                 result = inference(str(p))
 
