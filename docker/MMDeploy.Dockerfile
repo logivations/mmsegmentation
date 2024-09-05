@@ -8,6 +8,7 @@ FROM openmmlab/mmdeploy:ubuntu20.04-cuda11.8-mmdeploy1.3.0
 
 # previous method of local installation fails so fallback to the official method
 RUN rm -rf /root/workspace/mmdeploy
+ARG GITHUB_ACCESS_TOKEN
 RUN git clone https://github.com/logivations/mmdeploy.git /root/workspace/mmdeploy
 
 # RUN mim install mmsegmentation

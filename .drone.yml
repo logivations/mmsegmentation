@@ -41,6 +41,7 @@ steps:
       build_args:
         - BUILDKIT_INLINE_CACHE=1
         - MMSEGMENTATION_BRANCH=${DRONE_SOURCE_BRANCH}
+        - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
       cache_from: quay.io/logivations/ml_all:LS_mmseg_latest
       tags:
         - LS_mmseg_latest
@@ -62,6 +63,7 @@ steps:
       privileged: true
       build_args: 
         - BUILDKIT_INLINE_CACHE=1
+        - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
       cache_from: quay.io/logivations/ml_all:LS_mmdeploy_latest
       tags:
         - LS_mmdeploy_latest
@@ -113,6 +115,7 @@ steps:
       build_args:
         - BUILDKIT_INLINE_CACHE=1
         - MMSEGMENTATION_BRANCH=${DRONE_SOURCE_BRANCH}
+        - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
       cache_from: 
         - quay.io/logivations/ml_all:LS_mmseg_latest
         - quay.io/logivations/ml_all:LS_mmseg_pr${DRONE_PULL_REQUEST}
@@ -136,6 +139,7 @@ steps:
       privileged: true
       build_args: 
         - BUILDKIT_INLINE_CACHE=1
+        - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
       cache_from:
         - quay.io/logivations/ml_all:LS_mmdeploy_pr${DRONE_PULL_REQUEST}
         - quay.io/logivations/ml_all:LS_mmdeploy_latest
