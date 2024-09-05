@@ -34,6 +34,7 @@ RUN mkdir /data
 RUN echo changed
 ARG MMSEGMENTATION_BRANCH
 ENV MMSEGMENTATION_BRANCH=${MMSEGMENTATION_BRANCH}
+ARG GITHUB_ACCESS_TOKEN
 RUN git clone --depth 1 -b ${MMSEGMENTATION_BRANCH} https://github.com/logivations/mmsegmentation.git /mmsegmentation
 WORKDIR /mmsegmentation
 ENV FORCE_CUDA="1"
