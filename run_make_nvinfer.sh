@@ -11,7 +11,7 @@ CLASSES_LENGTH=${#CLASSES[@]}
 echo "[property]
 gpu-id=0
 
-onnx-file=segmentation_model.onnx
+onnx-file=model.onnx
 model-engine-file=segmentation_model.onnx_b1_gpu0_fp16.engine
 
 gie-unique-id=4
