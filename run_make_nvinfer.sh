@@ -12,7 +12,7 @@ echo "[property]
 gpu-id=0
 
 onnx-file=model.onnx
-model-engine-file=segmentation_model.onnx_b1_gpu0_fp16.engine
+model-engine-file=model.onnx_b1_gpu0_fp16.engine
 
 gie-unique-id=4
 net-scale-factor=0.00784313725490196
