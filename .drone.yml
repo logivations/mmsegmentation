@@ -40,7 +40,7 @@ steps:
       privileged: true
       build_args:
         - BUILDKIT_INLINE_CACHE=1
-        - MMSEGMENTATION_BRANCH=latest
+        - MMSEGMENTATION_BRANCH=main
         - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKKEN_SEGMENTATION}
       cache_from: quay.io/logivations/ml_all:LS_mmseg_latest
       tags:
