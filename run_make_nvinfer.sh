@@ -34,5 +34,5 @@ num-detected-classes=$CLASSES_LENGTH
 output-blob-names=output
 
 [custom]
-detected-classes=$CLASSES
+detected-classes=non-emtpy;$CLASSES
 " > "$MODEL_DIR/nvinfer-segmentation-config.txt"
