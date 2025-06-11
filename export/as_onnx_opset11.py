@@ -21,6 +21,18 @@ onnx_config = dict(
     output_names=['output'],
     optimize=True,
     input_shape=None,
+    dynamic_axes=dict(
+        input={
+            0: 'batch_size',
+            2: 'height',
+            3: 'width'
+        },
+        output={
+            0: 'batch_size',
+            2: 'height',
+            3: 'width'
+        }
+    ),
 )
 
 
