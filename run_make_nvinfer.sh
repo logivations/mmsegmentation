@@ -67,5 +67,5 @@ num-detected-classes=$CLASSES_LENGTH
 output-blob-names=output
 
 [custom]
-detected-classes=not-emtpy;$CLASSES
+detected-classes=not-empty;$CLASSES
 " > "$NVINFER_FILE"
