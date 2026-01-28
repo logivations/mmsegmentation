@@ -10,6 +10,13 @@ from mmengine.logging import print_log
 from mmengine.runner import Runner
 
 from mmseg.registry import RUNNERS
+from auto_training.export_model import export_model
+import glob
+
+# Patch torch.load for PyTorch 2.6+ (weights_only=True breaks numpy in checkpoints)
+import torch
+_original_torch_load = torch.load
+torch.load = lambda *args, **kwargs: _original_torch_load(*args, **{**kwargs, 'weights_only': False})
 
 
 def parse_args():
@@ -130,6 +137,17 @@ def main():
 
     # start training
     runner.train()
+
+    # Export the best model to ONNX after training
+    best_checkpoints = glob.glob(osp.join(cfg.work_dir, 'best_*.pth'))
+    if best_checkpoints:
+        # Use the most recent best checkpoint
+        best_checkpoint = max(best_checkpoints, key=osp.getmtime)
+        config_path = osp.join(cfg.work_dir, osp.basename(args.config))
+        print(f"\nExporting best model to ONNX: {best_checkpoint}")
+        export_model(config_path, best_checkpoint)
+    else:
+        print("Warning: No best checkpoint found, skipping ONNX export")
 
 if __name__ == '__main__':
     main()
