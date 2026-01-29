@@ -13,6 +13,11 @@ from PIL import Image
 import pathlib
 import time
 
+import torch
+_original_torch_load = torch.load
+torch.load = lambda *args, **kwargs: _original_torch_load(*args, **{**kwargs, 'weights_only': False})
+
+
 
 class FPSLogger:
     def __init__(self):
