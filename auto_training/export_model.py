@@ -177,7 +177,7 @@ def pytorch2onnx(model, input_shape, opset_version, output_file, verify, show):
         print(onnx.helper.printable_graph(onnx_model.graph))
 
 
-def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 3, 512, 512), opset_version=17):
+def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 3, 512, 512), opset_version=16):
     """Export a trained MMSegmentation model to ONNX format.
 
     Args:
