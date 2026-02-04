@@ -2,6 +2,7 @@ import argparse
 import os
 
 import torch
+import torch.nn as nn
 import numpy as np
 from mmengine.config import Config
 from mmseg.apis import init_model
@@ -53,6 +54,59 @@ def adaptive_avg_pool2d_onnx(input, output_size):
 
 # Apply the patch
 F.adaptive_avg_pool2d = adaptive_avg_pool2d_onnx
+
+
+class ExportWrapper(nn.Module):
+    """Wraps an mmseg segmentor for ONNX export, replicating mmdeploy's
+    rewriter logic.
+
+    Args:
+        model: An mmseg segmentor (e.g., EncoderDecoder).
+        with_argmax: Whether to apply argmax to the output.
+            mmdeploy defaults to True, but downstream postprocessing
+            (e.g., ORTSegmentationDetector) typically applies argmax
+            itself, so this defaults to False to avoid double application.
+    """
+
+    def __init__(self, model, with_argmax=False):
+        super().__init__()
+        self.model = model
+        self.with_argmax = with_argmax
+
+        if hasattr(model, 'num_stages'):
+            self.align_corners = model.decode_head[-1].align_corners
+        else:
+            self.align_corners = model.decode_head.align_corners
+
+    def forward(self, inputs):
+
+        img_shape = inputs.shape[2:]
+        x = self.model.extract_feat(inputs)
+
+        if hasattr(self.model, 'num_stages'):
+            out = self.model.decode_head[0].forward(x)
+            for i in range(1, self.model.num_stages - 1):
+                out = self.model.decode_head[i].forward(x, out)
+            seg_logits = self.model.decode_head[-1].forward(x, out)
+        else:
+            seg_logits = self.model.decode_head.forward(x)
+
+        seg_logits = F.interpolate(
+            seg_logits,
+            size=img_shape,
+            mode='bilinear',
+            align_corners=self.align_corners)
+
+        if self.with_argmax:
+            if seg_logits.shape[1] == 1:
+                seg_logits = seg_logits.sigmoid()
+                seg_pred = (seg_logits > self.model.decode_head.threshold).to(
+                    torch.int64)
+            else:
+                seg_pred = seg_logits.argmax(dim=1, keepdim=True)
+            return seg_pred
+
+        return seg_logits
 
 
 def parse_args():
@@ -123,7 +177,7 @@ def pytorch2onnx(model, input_shape, opset_version, output_file, verify, show):
         print(onnx.helper.printable_graph(onnx_model.graph))
 
 
-def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 3, 512, 512), opset_version=17):
+def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 3, 512, 512), opset_version=16):
     """Export a trained MMSegmentation model to ONNX format.
 
     Args:
@@ -144,8 +198,7 @@ def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 
     # build the model using init_model which handles registration
     model = init_model(cfg, checkpoint_path, device='cpu')
 
-    # Replace forward with _forward for export (like mmdeploy does)
-    model.forward = model._forward
+    model = ExportWrapper(model)
 
     # Determine output path
     if output_dir is None:
