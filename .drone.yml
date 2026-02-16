@@ -1,18 +1,12 @@
 ---
 #######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
-#######################         Jobs below are used to build only             #########################################
-#######################        master  branches for all containers            #########################################
-#######################                                                       #########################################
-#######################################################################################################################
-#######################################################################################################################
+#######################         CUDA 12.8 - Master build                         ######################################
 #######################################################################################################################
 
 # This pipeline would be used after each merge request  to build mmsegmentaion latest docker images
 kind: pipeline
 type: docker
-name: mmsegmentaion LS_mmdeploy_latest
+name: mmsegmentaion cu128 master build
 
 platform:
   arch: amd64
@@ -28,7 +22,7 @@ clone:
   depth: 1
 
 steps:
-  - name: Build latest LS_mmseg docker image
+  - name: Build latest LS_mmseg cu128 docker image
     image: plugins/docker:20.14
     environment:
       DOCKER_BUILDKIT: 1
@@ -42,29 +36,28 @@ steps:
         - BUILDKIT_INLINE_CACHE=1
         - MMSEGMENTATION_BRANCH=main
         - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKKEN_SEGMENTATION}
+        - PYTORCH=2.7.1
+        - CUDA=12.8
+        - CUDNN=9
+        - TORCH_CUDA_ARCH_LIST=7.5;8.0;8.6;12.0+PTX
       tags:
-        - LS_mmseg_latest
-        - LS_mmseg_latest_${DRONE_COMMIT_SHA}
+        - LS_mmseg_cu128_latest
+        - LS_mmseg_cu128_latest_${DRONE_COMMIT_SHA}
       username:
         from_secret: DOCKER_QUAY_USERNAME
       password:
         from_secret: DOCKER_QUAY_PASSWORD
 
 #######################################################################################################################
+#######################         CUDA 12.8 - PR validation build                  ######################################
 #######################################################################################################################
-#######################################################################################################################
-#######################              Jobs below are used to run               #########################################
-#######################             pull request validation only              #########################################
-#######################                                                       #########################################
-#######################################################################################################################
-#######################################################################################################################
-#######################################################################################################################
+
 
 # 2. Build docker image for mmsegmentation
 ---
 kind: pipeline
 type: docker
-name: PR validation build mmsegmentation images
+name: mmseg cu128 PR build
 
 platform:
   arch: amd64
@@ -79,7 +72,7 @@ clone:
   depth: 50
 
 steps:
-  - name: Build LS_mmseg docker image for pull request
+  - name: Build LS_mmseg cu128 docker image for PR
     image: plugins/docker:20.14
     environment:
       DOCKER_BUILDKIT: 1
@@ -93,12 +86,119 @@ steps:
         - BUILDKIT_INLINE_CACHE=1
         - MMSEGMENTATION_BRANCH=${DRONE_SOURCE_BRANCH}
         - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKKEN_SEGMENTATION}
+        - PYTORCH=2.7.1
+        - CUDA=12.8
+        - CUDNN=9
+        - TORCH_CUDA_ARCH_LIST=7.5;8.0;8.6;12.0+PTX
       cache_from: 
-        - quay.io/logivations/ml_all:LS_mmseg_latest
-        - quay.io/logivations/ml_all:LS_mmseg_pr${DRONE_PULL_REQUEST}
+        - quay.io/logivations/ml_all:LS_mmseg_cu128_latest
+        - quay.io/logivations/ml_all:LS_mmseg_cu128_pr${DRONE_PULL_REQUEST}
       tags:
-        - LS_mmseg_pr${DRONE_PULL_REQUEST}
-        - LS_mmseg_pr${DRONE_PULL_REQUEST}_${DRONE_COMMIT_SHA}
+        - LS_mmseg_cu128_pr${DRONE_PULL_REQUEST}
+        - LS_mmseg_cu128_pr${DRONE_PULL_REQUEST}_${DRONE_COMMIT_SHA}
+      username:
+        from_secret: DOCKER_QUAY_USERNAME
+      password:
+        from_secret: DOCKER_QUAY_PASSWORD
+
+---
+#######################################################################################################################
+#######################         CUDA 11.3 - Master build                         ######################################
+#######################################################################################################################
+
+# This pipeline would be used after each merge request  to build mmsegmentaion latest docker images
+kind: pipeline
+type: docker
+name: mmsegmentaion cu113 master build
+
+platform:
+  arch: amd64
+  os: linux
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
+
+clone:
+  depth: 1
+
+steps:
+  - name: Build latest LS_mmseg cu113 docker image
+    image: plugins/docker:20.14
+    environment:
+      DOCKER_BUILDKIT: 1
+    settings:
+      dockerfile: docker/Dockerfile
+      context: .
+      registry: quay.io
+      repo: quay.io/logivations/ml_all
+      privileged: true
+      build_args:
+        - BUILDKIT_INLINE_CACHE=1
+        - MMSEGMENTATION_BRANCH=main
+        - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKKEN_SEGMENTATION}
+        - PYTORCH=1.11.0
+        - CUDA=11.3
+        - CUDNN=8
+        - TORCH_CUDA_ARCH_LIST=6.0 6.1 7.0+PTX
+      tags:
+        - LS_mmseg_cu113_latest
+        - LS_mmseg_cu113_latest_${DRONE_COMMIT_SHA}
+      username:
+        from_secret: DOCKER_QUAY_USERNAME
+      password:
+        from_secret: DOCKER_QUAY_PASSWORD
+
+#######################################################################################################################
+#######################         CUDA 11.3 - PR validation build                  ######################################
+#######################################################################################################################
+
+
+# 2. Build docker image for mmsegmentation
+---
+kind: pipeline
+type: docker
+name: mmseg cu113 PR build
+
+platform:
+  arch: amd64
+  os: linux
+
+trigger:
+  event:
+    include:
+      - pull_request
+
+clone: 
+  depth: 50
+
+steps:
+  - name: Build LS_mmseg cu113 docker image for PR
+    image: plugins/docker:20.14
+    environment:
+      DOCKER_BUILDKIT: 1
+    settings: 
+      dockerfile: docker/Dockerfile
+      context: docker/
+      registry: quay.io
+      repo: quay.io/logivations/ml_all
+      privileged: true
+      build_args:
+        - BUILDKIT_INLINE_CACHE=1
+        - MMSEGMENTATION_BRANCH=${DRONE_SOURCE_BRANCH}
+        - GITHUB_ACCESS_TOKEN=${GITHUB_ACCESS_TOKKEN_SEGMENTATION}
+        - PYTORCH=1.11.0
+        - CUDA=11.3
+        - CUDNN=8
+        - TORCH_CUDA_ARCH_LIST=6.0 6.1 7.0+PTX
+      cache_from: 
+        - quay.io/logivations/ml_all:LS_mmseg_cu113_latest
+        - quay.io/logivations/ml_all:LS_mmseg_cu113_pr${DRONE_PULL_REQUEST}
+      tags:
+        - LS_mmseg_cu113_pr${DRONE_PULL_REQUEST}
+        - LS_mmseg_cu113_pr${DRONE_PULL_REQUEST}_${DRONE_COMMIT_SHA}
       username:
         from_secret: DOCKER_QUAY_USERNAME
       password:
