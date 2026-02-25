@@ -12,7 +12,7 @@
 # This pipeline would be used after each merge request  to build mmsegmentaion latest docker images
 kind: pipeline
 type: docker
-name: mmsegmentaion LS_mmdeploy_latest
+name: build mmsegmentation images
 
 platform:
   arch: amd64
