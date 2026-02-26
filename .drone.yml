@@ -14,6 +14,9 @@ kind: pipeline
 type: docker
 name: build mmsegmentation images
 
+node:
+  docker: build_only
+
 platform:
   arch: amd64
   os: linux
@@ -65,6 +68,9 @@ steps:
 kind: pipeline
 type: docker
 name: PR validation build mmsegmentation images
+
+node:
+  docker: build_only
 
 platform:
   arch: amd64
