@@ -127,19 +127,30 @@ def parse_args():
         nargs='+',
         default=[1, 3, 512, 512],
         help='input size')
+    parser.add_argument(
+        '--static-batch',
+        action='store_true',
+        help='disable dynamic batch size export')
     args = parser.parse_args()
     return args
 
 
-def pytorch2onnx(model, input_shape, opset_version, output_file, verify, show):
+def pytorch2onnx(model, input_shape, opset_version, output_file, verify, show, dynamic_batch=False):
     """Export PyTorch model to ONNX format."""
     model.eval()
 
     # Create dummy input
     dummy_input = torch.randn(input_shape)
 
+    dynamic_axes = None
+    if dynamic_batch:
+        dynamic_axes = {
+            'input': {0: 'batch_size'},
+            'output': {0: 'batch_size'},
+        }
+
     # Export to ONNX
-    print(f'Exporting model to ONNX with input shape: {input_shape}')
+    print(f'Exporting model to ONNX with input shape: {input_shape}, dynamic_batch={dynamic_batch}')
     torch.onnx.export(
         model,
         dummy_input,
@@ -147,7 +158,7 @@ def pytorch2onnx(model, input_shape, opset_version, output_file, verify, show):
         input_names=['input'],
         output_names=['output'],
         opset_version=opset_version,
-        dynamic_axes=None,
+        dynamic_axes=dynamic_axes,
         keep_initializers_as_inputs=False
     )
 
@@ -177,7 +188,7 @@ def pytorch2onnx(model, input_shape, opset_version, output_file, verify, show):
         print(onnx.helper.printable_graph(onnx_model.graph))
 
 
-def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 3, 512, 512), opset_version=16):
+def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 3, 512, 512), opset_version=16, dynamic_batch=True):
     """Export a trained MMSegmentation model to ONNX format.
 
     Args:
@@ -212,12 +223,13 @@ def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 
         opset_version=opset_version,
         show=False,
         output_file=model_output_path,
-        verify=False)
+        verify=False,
+        dynamic_batch=dynamic_batch)
 
     print(f"Model exported successfully to: {model_output_path}")
     return model_output_path
 
-
+# python3 -m auto_training.export_model /data/now/segm/config.py /data/now/segm/best_val_mDice_iter_24900.pth
 if __name__ == '__main__':
     args = parse_args()
 
@@ -225,5 +237,6 @@ if __name__ == '__main__':
         args.config,
         args.checkpoint,
         input_shape=tuple(args.shape),
-        opset_version=args.opset_version
+        opset_version=args.opset_version,
+        dynamic_batch=not args.static_batch
     )

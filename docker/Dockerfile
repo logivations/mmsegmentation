@@ -42,3 +42,4 @@ RUN pip install -r requirements.txt
 RUN pip install --no-cache-dir -e .
 RUN pip install git+https://github.com/facebookresearch/segment-anything.git
 RUN pip install git+https://github.com/ChaoningZhang/MobileSAM.git
+RUN pip install onnx onnxruntime
