@@ -56,7 +56,7 @@ batch-size=1
 
 infer-dims=3;$RES
 maintain-aspect-ratio=0
-model-color-format=0 # 0: RGB # 1: GBR # 2: GRAY
+model-color-format=1 # 0: RGB # 1: BGR # 2: GRAY
 
 network-type=2 # segmentation 
 segmentation-output-order=0 # 0: NCHW # 1: NHWC
