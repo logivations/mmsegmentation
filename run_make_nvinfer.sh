@@ -67,5 +67,6 @@ num-detected-classes=$CLASSES_LENGTH
 output-blob-names=output
 
 [custom]
+std=58.395;57.12;57.375
 detected-classes=not-empty;$CLASSES
 " > "$NVINFER_FILE"
