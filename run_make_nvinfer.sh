@@ -48,7 +48,7 @@ onnx-file=$ONNX_FILENAME
 model-engine-file=model.onnx_b1_gpu0_fp16.engine
 
 gie-unique-id=4
-net-scale-factor=0.00784313725490196
+net-scale-factor=0.01735207357
 offsets=123.675;116.28;103.53
 
 network-mode=2
