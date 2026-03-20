@@ -6,3 +6,4 @@ docker run -it --gpus all \
   -v "/data/mmsegmentation:/mmsegmentation/" \
   -w /mmsegmentation \
   quay.io/logivations/ml_all:LS_mmseg_latest
+  
