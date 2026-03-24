@@ -20,40 +20,66 @@ except ImportError as e:
 
 import torch.nn.functional as F
 
-# Patch adaptive_avg_pool2d for ONNX export (same approach as mmdeploy)
-_original_adaptive_avg_pool2d = F.adaptive_avg_pool2d
 
+def _replace_adaptive_pools(model, dummy_input):
+    """Replace all AdaptiveAvgPool2d with AvgPool2d with static kernel/stride.
 
-def adaptive_avg_pool2d_onnx(input, output_size):
-    """ONNX-compatible adaptive_avg_pool2d rewriter (mmdeploy style).
-
-    Converts adaptive_avg_pool2d to avg_pool2d with computed kernel/stride
-    to handle cases where output_size is not a factor of input_size.
+    During ONNX tracing, input.shape[i] is recorded as aten::size ops, making
+    kernel sizes computed from it non-constant. ONNX AveragePool requires
+    constant kernel_shape attributes. This function replaces modules BEFORE
+    tracing so kernel sizes become Python ints (constants) in the ONNX graph.
     """
-    h_in, w_in = input.shape[2], input.shape[3]
+    hooks = []
+    # {module_id: (parent_module, attr_name, new_module)}
+    replacements = {}
+    module_refs = {}
 
-    if isinstance(output_size, int):
-        output_size = (output_size, output_size)
-    elif output_size is None:
-        output_size = (1, 1)
+    def make_hook(module):
+        def hook(m, input, output):
+            h_in = int(input[0].shape[2])
+            w_in = int(input[0].shape[3])
+            output_size = m.output_size
+            if isinstance(output_size, int):
+                h_out = w_out = output_size
+            elif output_size is None:
+                h_out = w_out = 1
+            else:
+                h_out, w_out = int(output_size[0]), int(output_size[1])
 
-    h_out, w_out = output_size
+            if h_out == 1 and w_out == 1:
+                new_pool = nn.AvgPool2d(kernel_size=(h_in, w_in), stride=(h_in, w_in))
+            else:
+                stride_h = h_in // h_out
+                stride_w = w_in // w_out
+                kernel_h = h_in - (h_out - 1) * stride_h
+                kernel_w = w_in - (w_out - 1) * stride_w
+                new_pool = nn.AvgPool2d(kernel_size=(kernel_h, kernel_w), stride=(stride_h, stride_w))
 
-    # Global average pooling case - use mean for clean ONNX graph
-    if h_out == 1 and w_out == 1:
-        return input.mean(dim=[2, 3], keepdim=True)
+            replacements[id(m)] = new_pool
+        return hook
 
-    # Compute kernel_size and stride to achieve target output_size
-    stride_h = h_in // h_out
-    stride_w = w_in // w_out
-    kernel_h = h_in - (h_out - 1) * stride_h
-    kernel_w = w_in - (w_out - 1) * stride_w
+    for name, module in model.named_modules():
+        if isinstance(module, nn.AdaptiveAvgPool2d):
+            hook = module.register_forward_hook(make_hook(module))
+            hooks.append(hook)
+            module_refs[id(module)] = name
 
-    return F.avg_pool2d(input, kernel_size=(kernel_h, kernel_w), stride=(stride_h, stride_w))
+    with torch.no_grad():
+        model(dummy_input)
 
+    for hook in hooks:
+        hook.remove()
 
-# Apply the patch
-F.adaptive_avg_pool2d = adaptive_avg_pool2d_onnx
+    named_modules_dict = dict(model.named_modules())
+    for mod_id, new_pool in replacements.items():
+        name = module_refs[mod_id]
+        parts = name.rsplit('.', 1)
+        if len(parts) == 2:
+            parent = named_modules_dict[parts[0]]
+            setattr(parent, parts[1], new_pool)
+        else:
+            setattr(model, name, new_pool)
+        print(f'  Replaced AdaptiveAvgPool2d at "{name}" -> AvgPool2d(kernel={new_pool.kernel_size}, stride={new_pool.stride})')
 
 
 class ExportWrapper(nn.Module):
@@ -116,7 +142,7 @@ def parse_args():
     parser.add_argument('checkpoint', help='checkpoint file')
     parser.add_argument('--show', action='store_true', help='show onnx graph')
     parser.add_argument('--output-file', type=str, default='tmp.onnx')
-    parser.add_argument('--opset-version', type=int, default=11)
+    parser.add_argument('--opset-version', type=int, default=16)
     parser.add_argument(
         '--verify',
         action='store_true',
@@ -139,8 +165,13 @@ def pytorch2onnx(model, input_shape, opset_version, output_file, verify, show, d
     """Export PyTorch model to ONNX format."""
     model.eval()
 
-    # Create dummy input
     dummy_input = torch.randn(input_shape)
+
+    # Replace AdaptiveAvgPool2d with static AvgPool2d BEFORE tracing.
+    # This is required because ONNX AveragePool needs constant kernel sizes,
+    # but computing them from input.shape inside the trace produces dynamic ops.
+    print('Replacing AdaptiveAvgPool2d with static AvgPool2d...')
+    _replace_adaptive_pools(model, dummy_input)
 
     dynamic_axes = None
     if dynamic_batch:
@@ -229,7 +260,7 @@ def export_model(config_path, checkpoint_path, output_dir=None, input_shape=(1, 
     print(f"Model exported successfully to: {model_output_path}")
     return model_output_path
 
-# python3 -m auto_training.export_model /data/now/segm/config.py /data/now/segm/best_val_mDice_iter_24900.pth
+# python3 -m auto_training.export_model /path/to/custom_vit_uper.py /path/to/best_val_mDice_iter_111.pth
 if __name__ == '__main__':
     args = parse_args()
 
