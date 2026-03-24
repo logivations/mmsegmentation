@@ -48,7 +48,7 @@ onnx-file=$ONNX_FILENAME
 model-engine-file=model.onnx_b1_gpu0_fp16.engine
 
 gie-unique-id=4
-net-scale-factor=0.00784313725490196
+net-scale-factor=0.01735207357
 offsets=123.675;116.28;103.53
 
 network-mode=2
@@ -56,7 +56,7 @@ batch-size=1
 
 infer-dims=3;$RES
 maintain-aspect-ratio=0
-model-color-format=0 # 0: RGB # 1: GBR # 2: GRAY
+model-color-format=1 # 0: RGB # 1: BGR # 2: GRAY
 
 network-type=2 # segmentation 
 segmentation-output-order=0 # 0: NCHW # 1: NHWC
@@ -67,5 +67,6 @@ num-detected-classes=$CLASSES_LENGTH
 output-blob-names=output
 
 [custom]
+std=58.395;57.12;57.375
 detected-classes=not-empty;$CLASSES
 " > "$NVINFER_FILE"
