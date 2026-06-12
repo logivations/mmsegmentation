@@ -10,7 +10,6 @@ from argparse import ArgumentParser
 
 import numpy as np
 from numpy.lib import format as npy_format
-from PIL import Image
 import pathlib
 import time
 import zipfile
@@ -121,26 +120,6 @@ def main(config):
                 except Exception as e:
                     print(f"Failed with {p}. {e}")
 
-    elif config.mask_only:
-        for i, p in enumerate(image_paths, 1):
-            if not p.exists():
-                print(f"Skipping missing image: {p}")
-                continue
-            try:
-                fps_logger.start_record()
-                result = inference(str(p))
-
-                mask = result['predictions'].astype(np.uint8) * 255
-                mask_image = Image.fromarray(mask)
-                output_path = pathlib.Path(output_dir) / p.name
-                output_path = output_path.with_suffix(".png")
-
-                mask_image.save(output_path, "PNG")
-                fps_logger.end_record()
-
-            except Exception as e:
-                print(f"Failed with {p}. {e}")
-
     else:
         for p in images.glob("**/*.jpg"):
             print(p)
@@ -158,10 +137,6 @@ if __name__ == "__main__":
     parser.add_argument("config")
     parser.add_argument("images_dir", type=Path)
     parser.add_argument("output_dir", type=Path)
-    parser.add_argument(
-        "--mask_only",
-        action="store_true",
-        help="save masks only")
     parser.add_argument(
         "--npz",
         action="store_true",
