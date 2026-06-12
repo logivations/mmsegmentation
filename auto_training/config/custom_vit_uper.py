@@ -17,7 +17,7 @@ data_preprocessor = dict(
         57.375,
     ],
     type='SegDataPreProcessor')
-data_root = '/data/dataset'
+data_root = '/dataset'
 dataset_type = 'CustomMountedEmpty'
 default_hooks = dict(
     checkpoint=dict(
@@ -182,15 +182,16 @@ test_cfg = dict(type='TestLoop')
 test_dataloader = dict(
     batch_size=1,
     dataset=dict(
-        data_prefix=dict(img_path='test/images', seg_map_path='test/masks'),
-        data_root='/data/dataset',
+        data_prefix=dict(img_path='images'),
+        ann_npz_file='annotations/test.npz',
+        data_root=data_root,
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
                 512,
                 512,
             ), type='Resize'),
-            dict(type='LoadAnnotations'),
+            dict(type='LoadAnnotationsFromCache'),
             dict(type='PackSegInputs'),
         ],
         reduce_zero_label=False,
@@ -209,18 +210,19 @@ test_pipeline = [
         512,
         512,
     ), type='Resize'),
-    dict(type='LoadAnnotations'),
+    dict(type='LoadAnnotationsFromCache'),
     dict(type='PackSegInputs'),
 ]
 train_cfg = dict(max_iters=100, type='IterBasedTrainLoop', val_interval=100)
 train_dataloader = dict(
     batch_size=2,
     dataset=dict(
-        data_prefix=dict(img_path='train/images', seg_map_path='train/masks'),
-        data_root='/data/dataset',
+        data_prefix=dict(img_path='images'),
+        ann_npz_file='annotations/train.npz',
+        data_root=data_root,
         pipeline=[
             dict(type='LoadImageFromFile'),
-            dict(type='LoadAnnotations'),
+            dict(type='LoadAnnotationsFromCache'),
             dict(keep_ratio=False, scale=(
                 512,
                 512,
@@ -236,7 +238,7 @@ train_dataloader = dict(
     sampler=dict(shuffle=True, type='InfiniteSampler'))
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations'),
+    dict(type='LoadAnnotationsFromCache'),
     dict(keep_ratio=False, scale=(
         512,
         512,
@@ -261,7 +263,7 @@ tta_pipeline = [
                 dict(direction='horizontal', prob=1.0, type='RandomFlip'),
             ],
             [
-                dict(type='LoadAnnotations'),
+                dict(type='LoadAnnotationsFromCache'),
             ],
             [
                 dict(type='PackSegInputs'),
@@ -273,15 +275,16 @@ val_cfg = dict(type='ValLoop')
 val_dataloader = dict(
     batch_size=1,
     dataset=dict(
-        data_prefix=dict(img_path='val/images', seg_map_path='val/masks'),
-        data_root='/data/dataset',
+        data_prefix=dict(img_path='images'),
+        ann_npz_file='annotations/val.npz',
+        data_root=data_root,
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(keep_ratio=False, scale=(
                 512,
                 512,
             ), type='Resize'),
-            dict(type='LoadAnnotations'),
+            dict(type='LoadAnnotationsFromCache'),
             dict(type='PackSegInputs'),
         ],
         reduce_zero_label=False,
