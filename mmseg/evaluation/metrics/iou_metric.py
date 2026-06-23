@@ -81,6 +81,10 @@ class IoUMetric(BaseMetric):
             if not self.format_only:
                 label = data_sample['gt_sem_seg']['data'].squeeze().to(
                     pred_label)
+                if pred_label.shape != label.shape:
+                    print(f"[SHAPE MISMATCH] img_path={data_sample.get('img_path')} "
+                          f"pred_label.shape={tuple(pred_label.shape)} "
+                          f"label.shape={tuple(label.shape)}")
                 self.results.append(
                     self.intersect_and_union(pred_label, label, num_classes,
                                              self.ignore_index))
