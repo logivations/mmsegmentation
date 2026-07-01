@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os
+import threading
 import warnings
 from typing import Dict, Optional, Union
 
@@ -16,6 +18,30 @@ try:
     from osgeo import gdal
 except ImportError:
     gdal = None
+
+
+# Per-process cache of open NpzFile handles, keyed by (pid, path). Each
+# DataLoader worker is a forked process and must open its OWN handle — sharing
+# a single zip file handle across forked processes corrupts reads.
+_NPZ_HANDLES = {}
+_NPZ_LOCK = threading.Lock()
+
+
+def _get_npz_handle(path):
+    """Return a per-process cached, lazily-read NpzFile handle.
+
+    NpzFile reads array members from the zip on access (not all at once), so
+    only the masks of the current batch live in RAM — never the whole split.
+    """
+    key = (os.getpid(), path)
+    handle = _NPZ_HANDLES.get(key)
+    if handle is None:
+        with _NPZ_LOCK:
+            handle = _NPZ_HANDLES.get(key)
+            if handle is None:
+                handle = np.load(path)
+                _NPZ_HANDLES[key] = handle
+    return handle
 
 
 @TRANSFORMS.register_module()
@@ -702,3 +728,59 @@ class LoadDepthAnnotation(BaseTransform):
                     f'to_float32={self.to_float32}, '
                     f'backend_args={self.backend_args})')
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class LoadAnnotationsFromCache(BaseTransform):
+    """Load a single segmentation mask, lazily, from an NPZ annotation file.
+
+    Two input modes are supported (set by the dataset's ``load_data_list()``):
+
+    * Lazy (preferred, memory-safe at 120k+ masks): ``results`` carries
+      ``ann_npz_file`` + ``seg_map_key`` (+ ``seg_map_packed``). This transform
+      reads ONLY this sample's packed mask from the NPZ and unpacks it here, in
+      the DataLoader worker — so it overlaps with GPU compute and never holds
+      more than the current batch in RAM.
+    * In-memory (legacy): ``results['seg_map_data']`` already holds the uint8
+      mask; we just copy it.
+
+    Added Keys:
+    - seg_fields (List)
+    - gt_seg_map (np.uint8)
+    """
+
+    def transform(self, results: dict) -> dict:
+        seg = results.get('seg_map_data')
+        if seg is not None:
+            # Legacy in-RAM path — copy so the shared cached array isn't mutated.
+            gt_seg_map = seg.copy()
+            if gt_seg_map.dtype != np.uint8:
+                gt_seg_map = gt_seg_map.astype(np.uint8)
+        else:
+            # Lazy path — read just this mask from the NPZ on demand.
+            npz_path = results.get('ann_npz_file')
+            key = results.get('seg_map_key')
+            if not npz_path or not key:
+                # No annotation source (e.g. inference on raw images). Leave
+                # results untouched — DO NOT inject an empty gt_seg_map, so the
+                # model never mistakes a missing annotation for an empty one.
+                # In training every sample always carries these keys (the dataset
+                # filters to images present in the NPZ), so this branch is
+                # inference-only.
+                return results
+            npz = _get_npz_handle(npz_path)
+            if results.get('seg_map_packed', True):
+                h, w = npz[key + '__shape']
+                gt_seg_map = (
+                    np.unpackbits(npz[key + '__packed'])[:h * w]
+                    .reshape(h, w)
+                    .astype(np.uint8)
+                )
+            else:
+                gt_seg_map = npz[key].astype(np.uint8)
+        results['gt_seg_map'] = gt_seg_map
+        results['seg_fields'].append('gt_seg_map')
+        return results
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}()'
