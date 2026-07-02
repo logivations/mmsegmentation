@@ -36,10 +36,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+CLASSES_LENGTH=${#CLASSES[@]}
 CLASSES=$(IFS=';' ; echo "${CLASSES[*]}")
 RES=$(IFS=';' ; echo "${RES[*]}")
-
-CLASSES_LENGTH=${#CLASSES[@]}
 
 echo "[property]
 gpu-id=0
@@ -68,5 +67,5 @@ output-blob-names=output
 
 [custom]
 std=58.395;57.12;57.375
-detected-classes=not-empty;$CLASSES
+detected-classes=$CLASSES
 " > "$NVINFER_FILE"
