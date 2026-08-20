@@ -951,6 +951,30 @@ class RandomRotFlip(BaseTransform):
                     f'degree={self.degree})'
         return repr_str
 
+@TRANSFORMS.register_module()
+class RandomRotate90(BaseTransform):
+    """Randomly rotate image & seg by 90/180/270 degrees. Pure rotation,
+    no flip — unlike RandomRotFlip. Uses np.rot90, so no interpolation
+    and no black borders are introduced.
+
+    Args:
+        prob (float): Probability of applying the rotation.
+    """
+
+    def __init__(self, prob=0.5):
+        assert 0 <= prob <= 1
+        self.prob = prob
+
+    def transform(self, results: dict) -> dict:
+        if np.random.rand() < self.prob:
+            k = np.random.randint(1, 4)  # 1/2/3 -> 90/180/270 degrees
+            results['img'] = np.rot90(results['img'], k).copy()
+            for key in results.get('seg_fields', []):
+                results[key] = np.rot90(results[key], k).copy()
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(prob={self.prob})'
 
 @TRANSFORMS.register_module()
 class RandomFlip(MMCV_RandomFlip):

@@ -36,7 +36,7 @@ from .transforms import (CLAHE, AdjustGamma, Albu, BioMedical3DPad,
                          LoadImageFromNDArray, LoadMultipleRSImageFromFile,
                          LoadSingleRSImageFromFile, PackSegInputs,
                          PhotoMetricDistortion, RandomCrop, RandomCutOut,
-                         RandomMosaic, RandomRotate, RandomRotFlip, Rerange,
+                         RandomMosaic, RandomRotate, RandomRotate90, RandomRotFlip, Rerange,
                          ResizeShortestEdge, ResizeToMultiple, RGB2Gray,
                          SegRescale)
 from .voc import PascalVOCDataset
@@ -51,7 +51,7 @@ __all__ = [
     'MultiImageMixDataset', 'iSAIDDataset', 'ISPRSDataset', 'PotsdamDataset',
     'LoadAnnotations', 'RandomCrop', 'SegRescale', 'PhotoMetricDistortion',
     'RandomRotate', 'AdjustGamma', 'CLAHE', 'Rerange', 'RGB2Gray',
-    'RandomCutOut', 'RandomMosaic', 'PackSegInputs', 'ResizeToMultiple',
+    'RandomCutOut', 'RandomRotate90', 'RandomMosaic', 'PackSegInputs', 'ResizeToMultiple',
     'LoadImageFromNDArray', 'LoadBiomedicalImageFromFile',
     'LoadBiomedicalAnnotation', 'LoadBiomedicalData', 'GenerateEdge',
     'DecathlonDataset', 'LIPDataset', 'ResizeShortestEdge',
