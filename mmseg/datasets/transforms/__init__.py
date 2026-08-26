@@ -12,15 +12,15 @@ from .transforms import (CLAHE, AdjustGamma, Albu, BioMedical3DPad,
                          BioMedicalRandomGamma, ConcatCDInput, GenerateEdge,
                          PhotoMetricDistortion, RandomCrop, RandomCutOut,
                          RandomDepthMix, RandomFlip, RandomMosaic,
-                         RandomRotate, RandomRotFlip, Rerange, Resize,
-                         ResizeShortestEdge, ResizeToMultiple, RGB2Gray,
-                         SegRescale)
+                         RandomRotate, RandomRotate90, RandomRotFlip, Rerange,
+                         Resize, ResizeShortestEdge, ResizeToMultiple,
+                         RGB2Gray, SegRescale)
 
 # yapf: enable
 __all__ = [
     'LoadAnnotations', 'LoadAnnotationsFromCache', 'RandomCrop',
     'BioMedical3DRandomCrop', 'SegRescale',
-    'PhotoMetricDistortion', 'RandomRotate', 'AdjustGamma', 'CLAHE', 'Rerange',
+    'PhotoMetricDistortion', 'RandomRotate', 'RGB2Gray', 'AdjustGamma', 'CLAHE', 'Rerange',
     'RGB2Gray', 'RandomCutOut', 'RandomMosaic', 'PackSegInputs',
     'ResizeToMultiple', 'LoadImageFromNDArray', 'LoadBiomedicalImageFromFile',
     'LoadBiomedicalAnnotation', 'LoadBiomedicalData', 'GenerateEdge',
