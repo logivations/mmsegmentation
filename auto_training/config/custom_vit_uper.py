@@ -244,7 +244,8 @@ train_pipeline = [
         512,
     ), type='Resize'),
     dict(direction='horizontal', prob=0.5, type='RandomFlip'),
-    dict(type='RandomRotate90', prob=0.5),
+    # dict(type='RandomRotate90', prob=0.5),
+    dict(type='RandomRotate', prob=0.5, degree=180, pad_val=0, seg_pad_val=255, auto_bound=False),
     dict(type='PhotoMetricDistortion'),
     dict(type='PackSegInputs'),
 ]
