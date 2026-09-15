@@ -20,6 +20,7 @@ from mmseg.datasets.dataset_wrappers import MultiImageMixDataset
 from mmseg.registry import TRANSFORMS
 
 import os
+from mmengine.logging import MMLogger
 from collections import Counter
 
 try:
@@ -954,13 +955,11 @@ class RandomRotFlip(BaseTransform):
                     f'degree={self.degree})'
         return repr_str
 
-
 _debug_counter = Counter()
 _debug_calls = 0
-
 @TRANSFORMS.register_module()
 class RandomRotate90(BaseTransform):
-    def __init__(self, prob=0.5, debug_log_every=200):
+    def __init__(self, prob=0.5, debug_log_every=10):
         assert 0 <= prob <= 1
         self.prob = prob
         self.debug_log_every = debug_log_every
@@ -977,8 +976,9 @@ class RandomRotate90(BaseTransform):
         _debug_counter[k] += 1
         _debug_calls += 1
         if self.debug_log_every and _debug_calls % self.debug_log_every == 0:
-            print(f"[RandomRotate90 debug] pid={os.getpid()} "
-                  f"counts(0/90/180/270)={dict(sorted(_debug_counter.items()))}")
+            MMLogger.get_current_instance().info(
+                f"[RandomRotate90 debug] pid={os.getpid()} "
+                f"counts(0/90/180/270)={dict(sorted(_debug_counter.items()))}")
 
         return results
 
