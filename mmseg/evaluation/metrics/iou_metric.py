@@ -284,3 +284,29 @@ class IoUMetric(BaseMetric):
                 for metric, metric_value in ret_metrics.items()
             })
         return ret_metrics
+
+
+@METRICS.register_module()
+class RotationIoUMetric(IoUMetric):
+    """IoUMetric that additionally reports metrics per rotation angle.
+
+    Regular keys (mIoU, mDice, ...) are computed over all angles combined,
+    plus rot0_mIoU, rot90_mIoU, rot180_mIoU, rot270_mIoU, etc.
+    """
+
+    def process(self, data_batch, data_samples):
+        for ds in data_samples:
+            n = len(self.results)
+            super().process(data_batch, [ds])
+            if len(self.results) > n:
+                self.results[-1] = (ds.get('rot_k', 0), self.results[-1])
+
+    def compute_metrics(self, results):
+        out = {}
+        for k in range(4):
+            part = [r for kk, r in results if kk == k]
+            if part:
+                for name, v in super().compute_metrics(part).items():
+                    out[f'rot{k * 90}_{name}'] = v
+        out.update(super().compute_metrics([r for _, r in results]))
+        return out

@@ -955,23 +955,38 @@ class RandomRotFlip(BaseTransform):
                     f'degree={self.degree})'
         return repr_str
 
+
 _debug_counter = Counter()
 _debug_calls = 0
+_debug_saved = 0
+
+
 @TRANSFORMS.register_module()
 class RandomRotate90(BaseTransform):
-    def __init__(self, prob=0.5, debug_log_every=10):
+    """Random rotation by 90/180/270 degrees with probability `prob`.
+
+    If debug_save_n > 0, the first N samples are saved to debug_dir
+    (left: image after augmentation, right: mask overlay, green = platform,
+    red = ignore). The file name contains the rotation angle.
+    """
+
+    def __init__(self, prob=0.5, debug_log_every=10, debug_save_n=0,
+                 debug_dir='/results/aug_debug'):
         assert 0 <= prob <= 1
         self.prob = prob
         self.debug_log_every = debug_log_every
+        self.debug_save_n = debug_save_n
+        self.debug_dir = debug_dir
 
     def transform(self, results: dict) -> dict:
-        global _debug_calls
+        global _debug_calls, _debug_saved
         k = 0
         if np.random.rand() < self.prob:
             k = np.random.randint(1, 4)
             results['img'] = np.rot90(results['img'], k).copy()
             for key in results.get('seg_fields', []):
                 results[key] = np.rot90(results[key], k).copy()
+        results['rot_k'] = k
 
         _debug_counter[k] += 1
         _debug_calls += 1
@@ -980,10 +995,67 @@ class RandomRotate90(BaseTransform):
                 f"[RandomRotate90 debug] pid={os.getpid()} "
                 f"counts(0/90/180/270)={dict(sorted(_debug_counter.items()))}")
 
+        if _debug_saved < self.debug_save_n:
+            _debug_saved += 1
+            self._save_debug(results, k)
         return results
+
+    def _save_debug(self, results, k):
+        try:
+            os.makedirs(self.debug_dir, exist_ok=True)
+            img = np.ascontiguousarray(results['img']).astype(np.uint8)
+            over = img.copy()
+            mask = results.get('gt_seg_map')
+            if mask is None:
+                MMLogger.get_current_instance().warning(
+                    '[RandomRotate90 debug] gt_seg_map not found')
+            elif mask.shape[:2] != img.shape[:2]:
+                MMLogger.get_current_instance().warning(
+                    f'[RandomRotate90 debug] SHAPE MISMATCH '
+                    f'img={img.shape} mask={mask.shape}')
+            else:
+                fg = mask == 1
+                over[fg] = (0.5 * over[fg] + np.array([0, 127, 0])).astype(np.uint8)
+                over[mask == 255] = (0, 0, 255)
+            name = f'{os.getpid()}_{_debug_saved:03d}_rot{k * 90}.jpg'
+            cv2.imwrite(os.path.join(self.debug_dir, name), np.hstack([img, over]))
+        except Exception as e:  # debug code must never break training
+            MMLogger.get_current_instance().warning(
+                f'[RandomRotate90 debug] save failed: {e}')
 
     def __repr__(self):
         return self.__class__.__name__ + f'(prob={self.prob})'
+
+
+@TRANSFORMS.register_module()
+class FixedRot90(BaseTransform):
+    """Deterministic rotation by k*90 degrees. Used in val/test pipelines
+    to compute metrics on rotated images.
+
+    target='img' -> rotates the image (place BEFORE Resize)
+    target='seg' -> rotates the mask  (place AFTER LoadAnnotationsFromCache)
+    """
+
+    def __init__(self, k=0, target='img'):
+        assert target in ('img', 'seg')
+        self.k = k % 4
+        self.target = target
+
+    def transform(self, results: dict) -> dict:
+        results['rot_k'] = self.k
+        if self.k == 0:
+            return results
+        if self.target == 'img':
+            results['img'] = np.ascontiguousarray(np.rot90(results['img'], self.k))
+            results['img_shape'] = results['img'].shape[:2]
+            results['ori_shape'] = results['img'].shape[:2]
+        else:
+            results['gt_seg_map'] = np.ascontiguousarray(
+                np.rot90(results['gt_seg_map'], self.k))
+        return results
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(k={self.k}, target={self.target})'
 
 @TRANSFORMS.register_module()
 class RandomFlip(MMCV_RandomFlip):
