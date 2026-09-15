@@ -19,6 +19,9 @@ from scipy.ndimage import gaussian_filter
 from mmseg.datasets.dataset_wrappers import MultiImageMixDataset
 from mmseg.registry import TRANSFORMS
 
+import os
+from collections import Counter
+
 try:
     import albumentations
     from albumentations import Compose
@@ -951,26 +954,32 @@ class RandomRotFlip(BaseTransform):
                     f'degree={self.degree})'
         return repr_str
 
+
+_debug_counter = Counter()
+_debug_calls = 0
+
 @TRANSFORMS.register_module()
 class RandomRotate90(BaseTransform):
-    """Randomly rotate image & seg by 90/180/270 degrees. Pure rotation,
-    no flip — unlike RandomRotFlip. Uses np.rot90, so no interpolation
-    and no black borders are introduced.
-
-    Args:
-        prob (float): Probability of applying the rotation.
-    """
-
-    def __init__(self, prob=0.5):
+    def __init__(self, prob=0.5, debug_log_every=200):
         assert 0 <= prob <= 1
         self.prob = prob
+        self.debug_log_every = debug_log_every
 
     def transform(self, results: dict) -> dict:
+        global _debug_calls
+        k = 0
         if np.random.rand() < self.prob:
-            k = np.random.randint(1, 4)  # 1/2/3 -> 90/180/270 degrees
+            k = np.random.randint(1, 4)
             results['img'] = np.rot90(results['img'], k).copy()
             for key in results.get('seg_fields', []):
                 results[key] = np.rot90(results[key], k).copy()
+
+        _debug_counter[k] += 1
+        _debug_calls += 1
+        if self.debug_log_every and _debug_calls % self.debug_log_every == 0:
+            print(f"[RandomRotate90 debug] pid={os.getpid()} "
+                  f"counts(0/90/180/270)={dict(sorted(_debug_counter.items()))}")
+
         return results
 
     def __repr__(self):
