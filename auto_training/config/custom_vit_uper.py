@@ -210,12 +210,18 @@ test_dataloader = dict(
     num_workers=4,
     persistent_workers=True,
     sampler=dict(shuffle=False, type='DefaultSampler'),
-    dataset=_rot_dataset('annotations/test.npz'))
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(img_path='images'),
+        ann_npz_file='annotations/test.npz',
+        reduce_zero_label=False,
+        pipeline=test_pipeline))
 
 val_evaluator = dict(
     type='RotationIoUMetric', iou_metrics=['mIoU', 'mDice'], prefix='val')
 test_evaluator = dict(
-    type='RotationIoUMetric', iou_metrics=['mIoU', 'mDice'], prefix='test')
+    type='IoUMetric', iou_metrics=['mIoU', 'mDice'], prefix='test')
 
 tta_model = dict(type='SegTTAModel')
 tta_pipeline = [
