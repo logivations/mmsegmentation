@@ -16,7 +16,7 @@ norm_cfg = dict(requires_grad=True, type='SyncBN')
 
 # <<< CHANGE: the only value to change between runs.
 #     Run A (baseline): 0.0     Run B (with rotation): 0.75
-ROT_PROB = 0
+ROT_PROB = 0.5
 
 data_preprocessor = dict(
     bgr_to_rgb=False,
