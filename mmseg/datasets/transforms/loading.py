@@ -778,6 +778,11 @@ class LoadAnnotationsFromCache(BaseTransform):
                 )
             else:
                 gt_seg_map = npz[key].astype(np.uint8)
+        if gt_seg_map.size == 0:
+            # Empty annotation (stored as a (0, 0) mask): the image has no
+            # labelled pixels, so expand it to an all-background mask
+            h, w = results.get('ori_shape') or results['img'].shape[:2]
+            gt_seg_map = np.zeros((h, w), dtype=np.uint8)
         results['gt_seg_map'] = gt_seg_map
         results['seg_fields'].append('gt_seg_map')
         return results
