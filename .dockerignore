@@ -1,4 +1,8 @@
-.git
+# NOTE: `.git` must stay OUT of this list. The Label Studio runner checks out the
+# training branch inside the already-built container (`git pull && git checkout
+# <branch>` with WORKDIR /mmsegmentation), so the image needs a real git
+# repository there. Excluding `.git` makes every branch training fail with
+# "fatal: not a git repository".
 __pycache__
 *.pyc
 *.pyo
