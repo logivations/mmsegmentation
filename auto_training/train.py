@@ -145,7 +145,7 @@ def main():
         best_checkpoint = max(best_checkpoints, key=osp.getmtime)
         config_path = osp.join(cfg.work_dir, osp.basename(args.config))
         print(f"\nExporting best model to ONNX: {best_checkpoint}")
-        export_model(config_path, best_checkpoint)
+        export_model(config_path, best_checkpoint, input_shape=(1, 3, *cfg.model_image_size))
     else:
         print("Warning: No best checkpoint found, skipping ONNX export")
 

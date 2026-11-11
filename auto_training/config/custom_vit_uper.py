@@ -1,3 +1,7 @@
+model_image_size = (
+    256,
+    256,
+)
 custom_hooks = [
     dict(type='ForceRunTestLoop'),
 ]
@@ -66,10 +70,7 @@ model = dict(
         drop_path_rate=0.1,
         drop_rate=0.0,
         embed_dims=384,
-        img_size=(
-            512,
-            512,
-        ),
+        img_size=model_image_size,
         in_channels=3,
         interpolate_mode='bicubic',
         mlp_ratio=4,
@@ -97,10 +98,7 @@ model = dict(
         pad_val=0,
         rgb_to_bgr=False,
         seg_pad_val=255,
-        size=(
-            512,
-            512,
-        ),
+        size=model_image_size,
         std=[
             58.395,
             57.12,
@@ -140,10 +138,6 @@ model = dict(
     test_cfg=dict(mode='whole'),
     train_cfg=dict(),
     type='EncoderDecoder')
-model_image_size = (
-    512,
-    512,
-)
 norm_cfg = dict(requires_grad=True, type='SyncBN')
 optim_wrapper = dict(
     optimizer=dict(
@@ -187,10 +181,7 @@ test_dataloader = dict(
         data_root=data_root,
         pipeline=[
             dict(type='LoadImageFromFile'),
-            dict(keep_ratio=False, scale=(
-                512,
-                512,
-            ), type='Resize'),
+            dict(keep_ratio=False, scale=model_image_size, type='Resize'),
             dict(type='LoadAnnotationsFromCache'),
             dict(type='PackSegInputs'),
         ],
@@ -206,10 +197,7 @@ test_evaluator = dict(
     ], prefix='test', type='IoUMetric')
 test_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(keep_ratio=False, scale=(
-        512,
-        512,
-    ), type='Resize'),
+    dict(keep_ratio=False, scale=model_image_size, type='Resize'),
     dict(type='LoadAnnotationsFromCache'),
     dict(type='PackSegInputs'),
 ]
@@ -223,10 +211,7 @@ train_dataloader = dict(
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotationsFromCache'),
-            dict(keep_ratio=False, scale=(
-                512,
-                512,
-            ), type='Resize'),
+            dict(keep_ratio=False, scale=model_image_size, type='Resize'),
             dict(direction='horizontal', prob=0.5, type='RandomFlip'),
             dict(type='PhotoMetricDistortion'),
             dict(type='PackSegInputs'),
@@ -239,10 +224,7 @@ train_dataloader = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotationsFromCache'),
-    dict(keep_ratio=False, scale=(
-        512,
-        512,
-    ), type='Resize'),
+    dict(keep_ratio=False, scale=model_image_size, type='Resize'),
     dict(direction='horizontal', prob=0.5, type='RandomFlip'),
     dict(type='PhotoMetricDistortion'),
     dict(type='PackSegInputs'),
@@ -253,10 +235,7 @@ tta_pipeline = [
     dict(
         transforms=[
             [
-                dict(keep_ratio=False, scale=(
-                    512,
-                    512,
-                ), type='Resize'),
+                dict(keep_ratio=False, scale=model_image_size, type='Resize'),
             ],
             [
                 dict(direction='horizontal', prob=0.0, type='RandomFlip'),
@@ -280,10 +259,7 @@ val_dataloader = dict(
         data_root=data_root,
         pipeline=[
             dict(type='LoadImageFromFile'),
-            dict(keep_ratio=False, scale=(
-                512,
-                512,
-            ), type='Resize'),
+            dict(keep_ratio=False, scale=model_image_size, type='Resize'),
             dict(type='LoadAnnotationsFromCache'),
             dict(type='PackSegInputs'),
         ],
