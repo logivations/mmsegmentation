@@ -36,6 +36,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+RES=(256 256)
 CLASSES_LENGTH=${#CLASSES[@]}
 CLASSES=$(IFS=';' ; echo "${CLASSES[*]}")
 RES=$(IFS=';' ; echo "${RES[*]}")
