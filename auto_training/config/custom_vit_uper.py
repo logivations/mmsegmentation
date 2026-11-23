@@ -1,6 +1,6 @@
 model_image_size = (
-    384,
-    384,
+    512,
+    512,
 )
 custom_hooks = [
     dict(type='ForceRunTestLoop'),
@@ -107,7 +107,7 @@ model = dict(
         type='SegDataPreProcessor'),
     decode_head=dict(
         align_corners=False,
-        channels=512,
+        channels=256,
         dropout_ratio=0.1,
         in_channels=[
             384,
@@ -126,13 +126,7 @@ model = dict(
         norm_cfg=dict(requires_grad=True, type='SyncBN'),
         num_classes=2,
         out_channels=2,
-        pool_scales=(
-            1,
-            2,
-            3,
-            6,
-        ),
-        type='UPerHead'),
+        type='SegformerHead'),
     neck=None,
     pretrained='pretrain/deit_small_patch16_224-cd65a155.pth',
     test_cfg=dict(mode='whole'),
