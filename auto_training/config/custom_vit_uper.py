@@ -1,6 +1,6 @@
 model_image_size = (
-    256,
-    256,
+    384,
+    384,
 )
 custom_hooks = [
     dict(type='ForceRunTestLoop'),
